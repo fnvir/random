@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whiteboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="script.js"></script>
+</head>
+<body>
+    <canvas id="canv"></canvas> 
+    <div id="controls">
+        <div>
+            <input type="range" id="size" min="3" max="50" step="1" value="10">
+            <label for="size">size: 10</label>
+        </div>
+        <div>
+            <input type="color" id="color" value="#ffffff">
+            <label for="color">color: #ffffff</label>
+        </div>
+        <button id="download">Download</button>
+    </div>
+</body>
+</html>

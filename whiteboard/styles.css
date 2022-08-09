@@ -1,0 +1,36 @@
+body{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    background-color: gray;
+}
+
+#canv{
+    background-color: black;
+    position: absolute;
+    transform: translate(-50%,-50%);
+    left: 50%;
+    top: 50%;
+}
+
+#controls{
+    position: absolute;
+    padding: 10px;
+    border: 2px solid white;
+    /* left: 20px; */
+    /* top: 20px; */
+    width: 200px;
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+button{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto;
+}
+
+label, input{
+    color: white;
+    font-size: 18px;
+}
