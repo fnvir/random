@@ -20,8 +20,8 @@ class particle{
     update(){
         this.x+=this.speedX
         this.y+=this.speedY
-        if(this.x+this.radius>cw||this.x+this.radius<=0) {this.speedX*=-1}
-        if(this.y+this.radius>ch||this.y+this.radius<=0) {this.speedY*=-1}
+        if(this.x+this.radius>cw||this.x-this.radius<=0) {this.speedX*=-1}
+        if(this.y+this.radius>ch||this.y-this.radius<=0) {this.speedY*=-1}
         if(this.radius>=0.3) this.radius-=0.2
         // this.speedX+=0.2
         this.speedY+=0.2
