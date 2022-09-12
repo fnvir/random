@@ -148,8 +148,8 @@ function _redo(){
 
 function updateValues(e){
     let id=e.target.id, v=e.target.value;
-    if(id=='pen') swidth=v;
-    else if(id=='eraser') ewidth=v;
+    if(id=='pen') swidth=+v;
+    else if(id=='eraser') ewidth=+v;
     else if(id=='color') ctx.strokeStyle=scolor=v;
     document.querySelector(`[for="${id}"]`).innerText=id+": "+v;
 }
