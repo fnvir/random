@@ -1,7 +1,7 @@
 use:
 
-hold right click to draw
-hold left click to erase
+hold left click to draw
+hold right click to erase
 scroll mouse wheel to change line width
 ctrl+scroll to change eraser width
 
