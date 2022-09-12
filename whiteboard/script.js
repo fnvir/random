@@ -4,8 +4,8 @@ var pi=Math.PI;
 var ctx;
 let undo=[];
 let redo=[];
-let erase=false;
 
+var swidth=10,scolor='white',ewidth=40; //stroke width,colour, eraser width
 
 
 function main(){
@@ -14,63 +14,101 @@ function main(){
     cw=canv.width=window.innerWidth;
     ch=canv.height=window.innerHeight;
     ctx=canv.getContext('2d');
-    // ctx.fillStyle='cyan'
-    ctx.strokeStyle='white'
-    ctx.lineWidth=1
-    ctx.lineWidth=10;
     ctx.lineCap="round";
 
     let d=false;
-    let p=[]
+    let stroke=[]
     let nodraw=document.querySelector('#controls').getBoundingClientRect();
     let coll=(x,y)=>x<nodraw.width && y<nodraw.height;
 
-    document.addEventListener('mousedown',e=>{
-        if(d||coll(e.x,e.y)) return;
+
+    function getXY(e){
+        let x,y;
+        if(['touchstart' ,'touchmove','touchend','touchcancel'].includes(e.type)) {
+            let evt = (typeof e.originalEvent == 'undefined') ? e : e.originalEvent;
+            let touch = evt.touches[0] || evt.changedTouches[0];
+            x = touch.pageX;
+            y = touch.pageY;
+        } else if (['mousedown','mouseup','mousemove','mouseover','mouseout','mouseenter','mouseleave'].includes(e.type)) {
+            x = e.clientX;
+            y = e.clientY;
+        }
+        return [x,y]
+    }
+    
+    function mdown(e){
+        e.preventDefault()
+        let [x,y]=getXY(e)
+        if(d||coll(x,y)) return;
         d=true;
-        eraser(e.button==2)
-        p.push([e.x,e.y]);
-        draw(e.x,e.y);
-    })
+        let isEraser=e.button==2,l=isEraser?ewidth:swidth;
+        stroke.push([isEraser,l,scolor])
+        stroke.push([x,y]);
+        ctx.lineWidth=l
+        ctx.strokeStyle=scolor;
+        ctx.globalCompositeOperation=isEraser?'destination-out':'source-over';
+        draw(x,y);
+    }
 
-    document.addEventListener('mousemove',e=>{
-        if(!d||coll(e.x,e.y)) return;
-        let [dx,dy]=p[p.length-1];
-        if( Math.abs(e.x-dx)<5 && Math.abs(e.y-dy)<5 ) return;
-        p.push([e.x,e.y]) 
-        draw(e.x,e.y);
-    });
-
-    mUp=(e)=>{
-        if(!d||coll(e.x,e.y)) return;
+    function mmove(e){
+        e.preventDefault()
+        let [x,y]=getXY(e)
+        if(!d||coll(x,y)) return;
+        let [dx,dy]=stroke[stroke.length-1];
+        if( Math.abs(x-dx)<5 && Math.abs(y-dy)<5 ) return;
+        stroke.push([x,y]) 
+        draw(x,y);
+    }
+    function mUp(e){
+        e.preventDefault()
+        let [x,y]=getXY(e)
+        if(!d||coll(x,y)) return;
         d=false;
         ctx.beginPath();
-        undo.push([erase].concat(p));
+        undo.push(stroke);
+        stroke=[];
         redo.length=0;
-        p.length=0;
-        if(erase) eraser(false);
     }
-    document.addEventListener('mouseup',mUp);
 
-    document.addEventListener('contextmenu',e=>{
-        e.preventDefault()
-    });
+    canv.addEventListener('mousedown',mdown)
+    canv.addEventListener('mousemove',mmove);
+    canv.addEventListener('mouseup',mUp);
+
+    canv.addEventListener('touchstart',mdown)
+    canv.addEventListener('touchmove',mmove);
+    canv.addEventListener('touchend',mUp);
+
+    canv.addEventListener('contextmenu',e=>e.preventDefault());
 
 
     document.addEventListener('keydown',e=>{
         if(!e.ctrlKey) return;
+        if('xyz'.includes(e.key)) e.preventDefault()
         if(e.key=='z') _undo();
         else if (e.key=='y') _redo();
+        else if(e.key=='x'&& undo[undo.length-1]!='clear') {
+            ctx.clearRect(0,0,cw,ch)
+            undo.push('clear')
+        }
     })
+
+    canv.addEventListener('wheel',e=>{
+            let a=Math.sign(e.wheelDeltaY),id='pen';
+            if(e.ctrlKey){
+                e.preventDefault()
+                if(ewidth+2*a<101) ewidth+=2*a;
+                id='eraser';
+            } else if(swidth+a<51) swidth+=a
+            
+            let z=document.querySelector('#'+id);
+            z.value=id=='eraser'?ewidth:swidth;
+            document.querySelector(`[for="${id}"]`).innerText=id+': '+z.value;
+    });
 
     window.addEventListener('blur',mUp);
 
     document.querySelector('#download').addEventListener('click',dwnld);
     document.querySelectorAll('input').forEach(e=>e.addEventListener('input',updateValues));
-}
-function eraser(b){
-    erase=b;
-    ctx.globalCompositeOperation=b?'destination-out':'source-over';
 }
 
 function draw(x,y){
@@ -80,31 +118,39 @@ function draw(x,y){
     ctx.moveTo(x,y);
 }
 
-function redraw(){
+function redraw(start=0){
     ctx.clearRect(0,0,cw,ch);
-    for(let h of undo){
-        eraser(h[0])
-        for(let i=1;i<h.length;i++) draw(...h[i])
-        ctx.beginPath()
-    }
+    for(let i=start;i<undo.length;i++)
+        drawStroke(undo[i])
 }
+
+function drawStroke(stroke){
+    let [erase,lwidth,lcolor]=stroke[0];
+    ctx.lineWidth=lwidth;
+    ctx.strokeStyle=lcolor;
+    ctx.globalCompositeOperation=erase?'destination-out':'source-over';
+    for(let i=1;i<stroke.length;i++) draw(...stroke[i])
+    ctx.beginPath()
+}
+
 
 function _undo(){
     if(undo.length<1) return;
     redo.push(undo.pop())
-    redraw()
+    redraw(undo.lastIndexOf('clear')+1)
 }
 
 function _redo(){
     if(redo.length<1) return;
     undo.push(redo.pop())
-    redraw()
+    redraw(undo.lastIndexOf('clear')+1)
 }
 
 function updateValues(e){
     let id=e.target.id, v=e.target.value;
-    if(id=='size') ctx.lineWidth=v;
-    else if(id=='color') ctx.strokeStyle=v;
+    if(id=='pen') swidth=v;
+    else if(id=='eraser') ewidth=v;
+    else if(id=='color') ctx.strokeStyle=scolor=v;
     document.querySelector(`[for="${id}"]`).innerText=id+": "+v;
 }
 
