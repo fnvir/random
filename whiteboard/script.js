@@ -15,7 +15,6 @@ function main(){
     ch=canv.height=window.innerHeight;
     ctx=canv.getContext('2d');
     ctx.lineCap="round";
-
     let d=false;
     let stroke=[]
     let nodraw=document.querySelector('#controls').getBoundingClientRect();
@@ -81,34 +80,54 @@ function main(){
     canv.addEventListener('contextmenu',e=>e.preventDefault());
 
 
+    
+    canv.addEventListener('wheel',e=>{
+        let a=Math.sign(e.wheelDeltaY), id='pen',x=swidth+4*a;
+        if(e.ctrlKey) {
+            e.preventDefault()
+            id='eraser';
+            x=ewidth+4*a
+        }
+        let z=document.querySelector('#'+id);
+        if(x<+z.min||x>+z.max) return;
+        if(id=='pen') swidth=x
+        else ewidth=x
+        z.value=x
+        console.log(id,ewidth,x,z.value)
+        document.querySelector(`[for="${id}"]`).innerText=id+': '+z.value;
+    });
+    
+    window.addEventListener('blur',mUp);
+    
+    document.querySelector('#download').addEventListener('click',dwnld);
+    document.querySelectorAll('input').forEach(e=>e.addEventListener('input',updateValues));
+    
     document.addEventListener('keydown',e=>{
         if(!e.ctrlKey) return;
-        if('xyz'.includes(e.key)) e.preventDefault()
+        if('xyzc'.includes(e.key)) e.preventDefault()
         if(e.key=='z') _undo();
         else if (e.key=='y') _redo();
         else if(e.key=='x'&& undo[undo.length-1]!='clear') {
             ctx.clearRect(0,0,cw,ch)
             undo.push('clear')
+        } else if(e.key=='c'){
+            let rcolor=hslToHex(Math.floor(Math.random()*360),100,50);
+            scolor=rcolor
+            document.querySelector('#color').value=rcolor
+            document.querySelector(`[for="color"]`).innerText="color: "+rcolor;
         }
     })
+}
 
-    canv.addEventListener('wheel',e=>{
-            let a=Math.sign(e.wheelDeltaY),id='pen';
-            if(e.ctrlKey){
-                e.preventDefault()
-                if(ewidth+2*a<101) ewidth+=2*a;
-                id='eraser';
-            } else if(swidth+a<51) swidth+=a
-            
-            let z=document.querySelector('#'+id);
-            z.value=id=='eraser'?ewidth:swidth;
-            document.querySelector(`[for="${id}"]`).innerText=id+': '+z.value;
-    });
-
-    window.addEventListener('blur',mUp);
-
-    document.querySelector('#download').addEventListener('click',dwnld);
-    document.querySelectorAll('input').forEach(e=>e.addEventListener('input',updateValues));
+function hslToHex(h, s, l) {
+    l /= 100;
+    const a = s * Math.min(l, 1 - l) / 100;
+    const f = n => {
+        const k = (n + h / 30) % 12;
+        const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+        return Math.round(255 * color).toString(16).padStart(2, '0');   // convert to Hex and prefix "0" if needed
+    };
+    return `#${f(0)}${f(8)}${f(4)}`;
 }
 
 function draw(x,y){
