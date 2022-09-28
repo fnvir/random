@@ -71,7 +71,7 @@ function main(){
 
     canv.addEventListener('mousedown',mdown)
     canv.addEventListener('mousemove',mmove);
-    canv.addEventListener('mouseup',mUp);
+    window.addEventListener('mouseup',mUp);
 
     canv.addEventListener('touchstart',mdown)
     canv.addEventListener('touchmove',mmove);
@@ -93,7 +93,6 @@ function main(){
         if(id=='pen') swidth=x
         else ewidth=x
         z.value=x
-        console.log(id,ewidth,x,z.value)
         document.querySelector(`[for="${id}"]`).innerText=id+': '+z.value;
     });
     
@@ -108,8 +107,9 @@ function main(){
         if(e.key=='z') _undo();
         else if (e.key=='y') _redo();
         else if(e.key=='x'&& undo[undo.length-1]!='clear') {
-            ctx.clearRect(0,0,cw,ch)
+            drawStroke('clear')
             undo.push('clear')
+            redo.length=0;
         } else if(e.key=='c'){
             let rcolor=hslToHex(Math.floor(Math.random()*360),100,50);
             scolor=rcolor
@@ -144,6 +144,10 @@ function redraw(start=0){
 }
 
 function drawStroke(stroke){
+    if(stroke=='clear'){
+        ctx.clearRect(0,0,cw,ch);
+        return;
+    }
     let [erase,lwidth,lcolor]=stroke[0];
     ctx.lineWidth=lwidth;
     ctx.strokeStyle=lcolor;
@@ -161,8 +165,9 @@ function _undo(){
 
 function _redo(){
     if(redo.length<1) return;
-    undo.push(redo.pop())
-    redraw(undo.lastIndexOf('clear')+1)
+    let z=redo.pop();
+    undo.push(z)
+    drawStroke(z);
 }
 
 function updateValues(e){
