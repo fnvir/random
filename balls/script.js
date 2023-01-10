@@ -8,7 +8,7 @@ const randint=(mn,mx)=>Math.round(Math.random()*(mx-mn)+mn);
 
 let n;
 const balls=[]
-let minV,maxV,minR,maxR;
+let minV=-5,maxV=5,minR,maxR;
 
 
 
@@ -18,17 +18,15 @@ function main(){
     canv.width=cw;
     canv.height=ch;
     if(ch*cw<1e6){
-        n=20;
-        minV=-8;maxV=11;
-        minR=8;maxR=24;
-    } else {
         n=50;
-        minV=-15;maxV=15;
-        minR=8;maxR=55;
+        minR=8;maxR=20;
+    } else {
+        n=100;
+        minR=15;maxR=35;
     }
     for(let i=0;i<n;i++){
-        let tx=randint(1,cw-1),ty=randint(1,ch-1),tr=randint(minR,maxR),c=0;
-        l: while(c++<800){ // at most 1000 tries to avoid infinite loop
+        let tx=randint(1,cw-1),ty=randint(1,ch-1),tr=i>n-3?maxR:minR,c=0;
+        l: while(c++<500){ // at most 1000 tries to avoid infinite loop
             for(let b of balls)
                 if((b.x-tx)**2+(b.y-ty)**2<(tr+b.r)**2) {
                     tx=randint(1,cw-1);
@@ -38,7 +36,7 @@ function main(){
                 }
             break;
         }
-        balls.push(new ball(tx,ty,tr,`hsl(${randint(0,360)},100%,50%)`))
+        balls.push(new ball(tx,ty,tr,Math.random()>.5?`hsl(${randint(0,360)},100%,50%)`:'orange'))
     }
     
     requestAnimationFrame(draw)
@@ -52,6 +50,7 @@ class ball{
         this.r=r // radius
         this.m=this.r // mass
         this.v=new vector(randint(minV,maxV),randint(minV,maxV)) // velocity
+        this.nextC=this.c.add(this.v)
         this.color=color
     }
     update(){
@@ -100,17 +99,12 @@ class vector{
 }
 
 
-
-// var tt=Date.now()
-// var cc=1
 function draw(){
-    // if(Date.now()-tt>999){tt=Date.now();console.log(cc);cc=0;}
-    // ++cc
     ctx.clearRect(0,0,cw,ch);
     for(let i=0;i<balls.length;i++){
         let b1=balls[i];
         for(let j=i+1;j<n;j++){
-            let b2=balls[j], t=b1.c.add(b1.v).sub_eq(b2.c.add(b2.v));
+            let b2=balls[j], t=b1.c.sub(b2.c);
             if(t.x**2+t.y**2<(b1.r+b2.r)**2){
                 let z1=b1.c.sub(b2.c), z2=b2.c.sub(b1.c);
                 let w1=2*b2.m*b1.v.sub(b2.v).dot(z1)/((b1.m+b2.m)*(z1.x**2+z1.y**2));
@@ -119,10 +113,20 @@ function draw(){
                 z2.mul_eq(w2);
                 b1.v.sub_eq(z1);
                 b2.v.sub_eq(z2);
+                // to prevent balls from sticking together when velocity is low
+                b1.nextC=b1.c.add(b1.v)
+                b2.nextC=b2.c.add(b2.v)
+                for(let c=0;(b1.nextC.x-b2.nextC.x)**2+(b1.nextC.y-b2.nextC.y)**2<(b1.r+b2.r)**2&&c<200;c++){
+                    b1.nextC.add_eq(b1.v)
+                    b2.nextC.add_eq(b2.v)
+                }
+                b1.nextC.sub_eq(b1.v)
+                b2.nextC.sub_eq(b2.v)
             }
         }
     }
     for(let b of balls){
+        b.c=b.nextC
         b.update()
         ctx.strokeStyle=ctx.fillStyle=b.color;
         ctx.beginPath()
