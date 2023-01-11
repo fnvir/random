@@ -18,10 +18,11 @@ function main(){
     canv.width=cw;
     canv.height=ch;
     if(ch*cw<1e6){
-        n=52;
-        minR=9;maxR=20;
+        n=50;
+        minV=-3,maxV=3
+        minR=8;maxR=23;
     } else {
-        n=110;
+        n=105;
         minR=15;maxR=35;
     }
     for(let i=0;i<n;i++){
@@ -146,7 +147,7 @@ function fixCollisionPoint(b1,b2) { // if two balls overlap, move them to the po
     let discriminant=b*b-4*a*c;
     if(discriminant<0) return;
     let t=Math.max((-b-Math.sqrt(discriminant))/(2*a),(-b+Math.sqrt(discriminant))/(2*a))
-//     if(t<0) return;
+    if(t<0) return;
     b1.nextC=b1.c.sub_eq(b1.v.mul(t))
     b2.nextC=b2.c.sub_eq(b2.v.mul(t))
 }
